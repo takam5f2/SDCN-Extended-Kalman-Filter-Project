@@ -65,7 +65,7 @@ int main()
     	  // reads first element from the current line
     	  string sensor_type;
     	  iss >> sensor_type;
-
+	  // Values measured by sensors.
     	  if (sensor_type.compare("L") == 0) {
       	  		meas_package.sensor_type_ = MeasurementPackage::LASER;
           		meas_package.raw_measurements_ = VectorXd(2);
@@ -98,6 +98,7 @@ int main()
     	  iss >> y_gt;
     	  iss >> vx_gt;
     	  iss >> vy_gt;
+	  // Ground truth value.
     	  VectorXd gt_values(4);
     	  gt_values(0) = x_gt;
     	  gt_values(1) = y_gt; 
