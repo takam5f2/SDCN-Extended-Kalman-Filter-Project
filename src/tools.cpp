@@ -49,20 +49,20 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
   float py = x_state(1);
   float vx = x_state(2);
   float vy = x_state(3);
+  float fact0 = px*px + py*py; // px^2 + py^2.
+  float fact1 = sqrt(fact0); // (px^2+py^2)^1/2.
+  float fact2 = fact0 * fact1; // (px^2+py^2)^(3/2).
 
   // check invalid augument input.
-  if (px == 0 || py == 0) {
+  if (fabs(fact0) < 0.0001) {
     cerr << "Divided by 0 occurs. This is invalid." << endl;
     return Hj;
   }
 
-  float fact0 = px*px + py*py; // px^2 + py^2.
-  float fact1 = std::sqrt(fact0); // (px^2+py^2)^1/2.
-  float fact2 = std::pow(fact1, 3.0); // (px^2+py^2)^(3/2).
   // calculate jacobian matrix according to the defined formula.
-  Hj << px/fact1, py/fact1, 0, 0,
-    -py/fact0, px/fact0, 0, 0,
-    py*(vx*py-vy*px)/fact2, px*(vy*px-vx*py)/fact2, px/fact1, py/fact1;
+  Hj << (px/fact1), (py/fact1), 0, 0,
+      -(py/fact0), (px/fact0), 0, 0,
+      py*(vx*py-vy*px)/fact2, px*(vy*px-vx*py)/fact2, px/fact1, py/fact1;
 
   return Hj;
   

@@ -11,11 +11,33 @@ using std::vector;
 /*
  * Constructor.
  */
-FusionEKF::FusionEKF() {
-    is_initialized_ = false;
+FusionEKF::FusionEKF() :
+    is_initialized_(false),
+    previous_timestamp_(0),
+    x_state_(),
+    R_laser_(),
+    R_radar_(),
+    H_laser_(),
+    Hj_(),
+    P_(),
+    noise_ax(9),
+    noise_ay(9)
+{}
 
-    previous_timestamp_ = 0;
+/**
+ * Destructor.
+ */
+FusionEKF::~FusionEKF() {}
 
+/**
+ *  Initialize vector and matrixes
+*/
+void FusionEKF::InitializeSelf(void) {
+
+    // initialize state vector
+    x_state_ = VectorXd(4);
+    x_state_ << 1, 1, 1, 1;
+    
     // initializing matrices
     R_laser_ = MatrixXd(2, 2);
     R_radar_ = MatrixXd(3, 3);
@@ -30,48 +52,30 @@ FusionEKF::FusionEKF() {
     R_radar_ << 0.09, 0, 0,
         0, 0.0009, 0,
         0, 0, 0.09;
-	
+
+    // process covariance matrix
     H_laser_ << 1, 0, 0, 0,
 	        0, 1, 0, 0;
-
-    /**
-       TODO:
-       * Finish initializing the FusionEKF.
-       * Set the process and measurement noises
-       */
+    
+    // Uncertainty covariance matrix
     P_ = MatrixXd(4,4);
     P_ << 1, 0, 0, 0,
 	  0, 1, 0, 0,
 	  0, 0, 1000, 0,
 	  0, 0, 0, 1000;
-    noise_ax = 9;
-    noise_ay = 9;
-
 }
-
-/**
- * Destructor.
- */
-FusionEKF::~FusionEKF() {}
-
-void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
-    // Eigen::MatrixXd *R_;
-    // Eigen::MatrixXd *H_;
-
+/*
+ *! Execute first step of tracking.
+ @param[in] measuement_pack ; measurement dataset
+ @return true: Initialization completion, false; the following tracking.
+*/
+bool FusionEKF::InitialTracking(const MeasurementPackage &measurement_pack) {
     /*****************************************************************************
      *  Initialization
      ****************************************************************************/
     if (!is_initialized_) {
-	/**
-	   TODO:
-	   * Initialize the state ekf_.x_ with the first measurement.
-	   * Create the covariance matrix.
-	   * Remember: you'll need to convert radar from polar to cartesian coordinates.
-	   */
-	// first measurement
+	this->InitializeSelf();
 	cout << "EKF: " << endl;
-	ekf_.x_ = VectorXd(4);
-	ekf_.x_ << 1, 1, 1, 1;
 
 	if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
 	    /**
@@ -81,22 +85,32 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 	    float theta;
 	    ro = measurement_pack.raw_measurements_(0);
 	    theta = measurement_pack.raw_measurements_(1);
-	    ekf_.x_(0) =  ro * std::cos(theta);
-	    ekf_.x_(1) =  ro * std::sin(theta);
-	    ekf_.Init(ekf_.x_, P_, ekf_.F_, Hj_, R_radar_, ekf_.Q_);
+	    x_state_(0) =  ro * std::cos(theta);
+	    x_state_(1) =  ro * std::sin(theta);
+	    ekf_.Init(x_state_, P_, ekf_.F_, Hj_, R_radar_, ekf_.Q_);
 	}
 	else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
 	    /**
 	       Initialize state.
 	    */
-	    ekf_.x_ << measurement_pack.raw_measurements_(0), measurement_pack.raw_measurements_(1), 0, 0;
-	    ekf_.Init(ekf_.x_, P_, ekf_.F_, H_laser_, R_laser_, ekf_.Q_);
+	    x_state_(0) = measurement_pack.raw_measurements_(0);
+	    x_state_(1) = measurement_pack.raw_measurements_(1);
+	    ekf_.Init(x_state_, P_, ekf_.F_, H_laser_, R_laser_, ekf_.Q_);
 	}
 	previous_timestamp_ = measurement_pack.timestamp_;
 	// done initializing, no need to predict or update
 	is_initialized_ = true;
-	return;
+	return true;
     }
+    return false;
+}
+
+void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
+    /*** initialization and initial step **/
+    if (InitialTracking(measurement_pack))
+	// if initialization is done, return parent function.
+	return;
+
     float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
     previous_timestamp_ = measurement_pack.timestamp_;
     float dt_2 = dt * dt;
@@ -124,8 +138,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 	return;
     } 
     Hj_ << (px/c2), (py/c2), 0, 0,
-	    -(py/c1), (px/c1), 0, 0,
-	   py*(vx*py - vy*px)/c3, px*(px*vy - py*vx)/c3, px/c2, py/c2;    
+	-(py/c1), (px/c1), 0, 0,
+	py*(vx*py - vy*px)/c3, px*(px*vy - py*vx)/c3, px/c2, py/c2;
+    Tools tools;
+    // Hj_ = tools.CalculationJacobian(x_state)
 
     /*****************************************************************************
      *  Prediction
