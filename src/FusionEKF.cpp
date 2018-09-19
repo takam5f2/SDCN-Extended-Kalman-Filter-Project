@@ -2,6 +2,7 @@
 #include "tools.h"
 #include "Eigen/Dense"
 #include <iostream>
+#include <cassert>
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -113,51 +114,16 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
     previous_timestamp_ = measurement_pack.timestamp_;
-    float dt_2 = dt * dt;
-    float dt_3 = dt_2 * dt;
-    float dt_4 = dt_3 * dt;
-    ekf_.F_ = MatrixXd(4,4);
-    ekf_.F_ << 1, 0, dt, 0,
-	       0, 1, 0, dt,
-	       0, 0, 1, 0,
-	       0, 0, 0, 1;
-    ekf_.Q_ = MatrixXd(4,4);
-    ekf_.Q_ << dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
-               0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
-	       dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
-	       0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
-    float px = ekf_.x_(0);
-    float py = ekf_.x_(1);
-    float vx = ekf_.x_(2);
-    float vy = ekf_.x_(3);
-    float c1 = px*px + py*py;
-    float c2 = sqrt(c1);
-    float c3 = c1 * c2;
-    if(fabs(c1) < 0.0001){
-	cout << "CalculateJacobian () - Error - Division by Zero" << endl;
-	return;
-    } 
-    Hj_ << (px/c2), (py/c2), 0, 0,
-	-(py/c1), (px/c1), 0, 0,
-	py*(vx*py - vy*px)/c3, px*(px*vy - py*vx)/c3, px/c2, py/c2;
     Tools tools;
-    // Hj_ = tools.CalculationJacobian(x_state)
+    ekf_.F_ = tools.PredictionMatrix(dt);
+    ekf_.Q_ = tools.CalculatePCovariance(dt, noise_ax, noise_ay);
+    Hj_ =  tools.CalculateJacobian(ekf_.x_);
 
     /*****************************************************************************
      *  Prediction
      ****************************************************************************/
 
-    /**
-       TODO:
-       * Update the state transition matrix F according to the new elapsed time.
-       - Time is measured in seconds.
-       * Update the process noise covariance matrix.
-       * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
-       */
-    // ekf_set_Time(MeasurementPackage::timestamp);
-    cout << "predict begin " << endl;
     ekf_.Predict();
-    cout << "predict end " << endl;
 
     /*****************************************************************************
      *  Update

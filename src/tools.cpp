@@ -43,27 +43,45 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
   TODO:
     * Calculate a Jacobian here.
   */
-  MatrixXd Hj(3,4);
-
-  float px = x_state(0);
-  float py = x_state(1);
-  float vx = x_state(2);
-  float vy = x_state(3);
-  float fact0 = px*px + py*py; // px^2 + py^2.
-  float fact1 = sqrt(fact0); // (px^2+py^2)^1/2.
-  float fact2 = fact0 * fact1; // (px^2+py^2)^(3/2).
-
-  // check invalid augument input.
-  if (fabs(fact0) < 0.0001) {
-    cerr << "Divided by 0 occurs. This is invalid." << endl;
-    return Hj;
-  }
-
-  // calculate jacobian matrix according to the defined formula.
-  Hj << (px/fact1), (py/fact1), 0, 0,
-      -(py/fact0), (px/fact0), 0, 0,
-      py*(vx*py-vy*px)/fact2, px*(vy*px-vx*py)/fact2, px/fact1, py/fact1;
-
-  return Hj;
+    MatrixXd Hj_ = MatrixXd(3, 4);
+    
+    float px = x_state(0);
+    float py = x_state(1);
+    float vx = x_state(2);
+    float vy = x_state(3);
+    float c1 = px*px + py*py;
+    float c2 = sqrt(c1);
+    float c3 = c1 * c2;
+    if(fabs(c1) < 0.0001){
+	cout << "CalculateJacobian () - Error - Division by Zero" << endl;
+	return Hj_;
+    } 
+    Hj_ << (px/c2), (py/c2), 0, 0,
+	-(py/c1), (px/c1), 0, 0,
+	py*(vx*py - vy*px)/c3, px*(px*vy - py*vx)/c3, px/c2, py/c2;
+    return Hj_;
   
+}
+
+MatrixXd Tools::PredictionMatrix(const float delta_t) {
+    MatrixXd F_;
+    F_ = MatrixXd(4,4);
+    F_ << 1, 0, delta_t, 0,
+	       0, 1, 0, delta_t,
+	       0, 0, 1, 0,
+	       0, 0, 0, 1;
+    return F_;
+}
+
+MatrixXd Tools::CalculatePCovariance(const float delta_t, const float noise_ax, const float noise_ay) {
+    MatrixXd Q_ ;
+    float dt_2 = delta_t * delta_t;
+    float dt_3 = dt_2 * delta_t;
+    float dt_4 = dt_3 * delta_t;
+    Q_ = MatrixXd(4,4);
+    Q_ << dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
+               0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
+	       dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
+	       0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
+    return Q_;
 }

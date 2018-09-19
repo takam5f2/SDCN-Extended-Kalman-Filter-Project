@@ -29,6 +29,17 @@ public:
   */
   MatrixXd CalculateJacobian(const VectorXd& x_state);
 
+  /**
+  * A helper method to calculate Process covariance.
+  */
+  MatrixXd CalculatePCovariance(const float delta_t, const float noise_ax, const float noise_ay);
+
+  /**
+  * A helper method to Prediction matrix
+  */
+  MatrixXd PredictionMatrix(const float delta_t);
+  
+
 };
 
 #endif /* TOOLS_H_ */
