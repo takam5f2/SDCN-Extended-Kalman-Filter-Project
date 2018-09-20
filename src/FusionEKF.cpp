@@ -114,10 +114,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
     previous_timestamp_ = measurement_pack.timestamp_;
-    Tools tools;
-    ekf_.F_ = tools.PredictionMatrix(dt);
-    ekf_.Q_ = tools.CalculatePCovariance(dt, noise_ax, noise_ay);
-    Hj_ =  tools.CalculateJacobian(ekf_.x_);
+    ekf_.SetMatrixes(dt, noise_ax, noise_ay);
 
     /*****************************************************************************
      *  Prediction
@@ -128,12 +125,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     /*****************************************************************************
      *  Update
      ****************************************************************************/
-
-    /**
-       TODO:
-       * Use the sensor type to perform the update step.
-       * Update the state and covariance matrices.
-       */
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
 	// Radar updates

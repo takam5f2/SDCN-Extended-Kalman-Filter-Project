@@ -17,9 +17,12 @@ class KalmanFilter {
   // process covariance matrix
   Eigen::MatrixXd Q_;
 
-  // measurement matrix
+  // measurement matrix for Normal Kalman filter
   Eigen::MatrixXd H_;
 
+  // measurement matrix for Extended Kalman filter
+  Eigen::MatrixXd Hj_;
+  
   // measurement covariance matrix
   Eigen::MatrixXd R_;
 
@@ -45,6 +48,14 @@ class KalmanFilter {
   void Init(Eigen::VectorXd &x_in, Eigen::MatrixXd &P_in, Eigen::MatrixXd &F_in,
 	    Eigen::MatrixXd &H_in, Eigen::MatrixXd &R_in, Eigen::MatrixXd &Q_in);
 
+  /**
+   * Set F_, Q_, and Hj_
+   * @param dt differential time
+   * @param noise_ax: noise for ax 
+   * @param noise_ay: noise for ay
+   */
+  void SetMatrixes(const float dt, const float noise_ax, const float noise_ay);
+  
   /**
    * Prediction Predicts the state and the state covariance
    * using the process model

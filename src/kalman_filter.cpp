@@ -1,4 +1,5 @@
 #include "kalman_filter.h"
+#include "tools.h"
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -18,6 +19,13 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
     H_ = H_in;
     R_ = R_in;
     Q_ = Q_in;
+}
+
+void KalmanFilter::SetMatrixes(const float dt, const float noise_ax, const float noise_ay) {
+    Tools tools;
+    F_ = tools.PredictionMatrix(dt);
+    Q_ = tools.CalculatePCovariance(dt, noise_ax, noise_ay);
+    Hj_ = tools.CalculateJacobian(x_);
 }
 
 void KalmanFilter::Predict() {
@@ -76,8 +84,8 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 	error_y(1) = error_y(1) + 2*M_PI;
     }
     
-    MatrixXd Htrans = H_.transpose();
-    MatrixXd S = H_ * P_ * Htrans + R_; // calculate S Matrix
+    MatrixXd Htrans = Hj_.transpose();
+    MatrixXd S = Hj_ * P_ * Htrans + R_; // calculate S Matrix
     MatrixXd Sinv = S.inverse();
     MatrixXd PHt = P_ * Htrans;
     MatrixXd K = PHt * Sinv; // Calculate Kalman Gain
@@ -85,5 +93,5 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     x_ = x_ + (K * error_y);
     long x_size = x_.size();
     MatrixXd I = MatrixXd::Identity(x_size, x_size);
-    P_ = (I - K * H_) * P_;
+    P_ = (I - K * Hj_) * P_;
 }
