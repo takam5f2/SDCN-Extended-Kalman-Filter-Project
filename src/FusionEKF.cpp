@@ -85,8 +85,8 @@ bool FusionEKF::InitialTracking(const MeasurementPackage &measurement_pack) {
       float theta;
       ro = measurement_pack.raw_measurements_(0);
       theta = measurement_pack.raw_measurements_(1);
-      x_state_(0) =  ro * std::cos(theta);
-      x_state_(1) =  ro * std::sin(theta);
+      x_state_(0) =  ro * cos(theta);
+      x_state_(1) =  ro * sin(theta);
       ekf_.Init(x_state_, P_, ekf_.F_, Hj_, R_radar_, ekf_.Q_);
     } else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       /**
