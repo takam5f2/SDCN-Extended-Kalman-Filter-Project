@@ -107,6 +107,8 @@ for instructions and the project rubric.
 ## Achievement
  According to [project rubic](https://review.udacity.com/#!/rubrics/748/view), sensor fusion should estimates position and velocity as px, py, vx, and vy RMSE should be less than equal to the values [.11, .11, 0.52, 0.52] against running Dataset1.
  
- My sensor fusion gained RMSE as [0.0964, 0.853, 0.4154, 0.4316] at the end of execution. I think that my sensor fusion fulfill minimum requirement for submission.
+ My sensor fusion gained RMSE as [0.0964, 0.853, 0.4154, 0.4316] at the end of execution as the following image shows. I think that my sensor fusion fulfill minimum requirement for submission.
+ 
+ ![sim_image](kalman_filter_simulation.png)
  
  From viewpoint of accuracy, my submission must fulfill requirement shown in project rubic.
