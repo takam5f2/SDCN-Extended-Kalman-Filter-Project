@@ -20,9 +20,6 @@ class KalmanFilter {
   // measurement matrix for Normal Kalman filter
   Eigen::MatrixXd H_;
 
-  // measurement matrix for Extended Kalman filter
-  Eigen::MatrixXd Hj_;
-  
   // measurement covariance matrix
   Eigen::MatrixXd R_;
 
@@ -49,12 +46,35 @@ class KalmanFilter {
 	    Eigen::MatrixXd &H_in, Eigen::MatrixXd &R_in, Eigen::MatrixXd &Q_in);
 
   /**
-   * Set F_, Q_, and Hj_
+   * Set Uncertainty matrix of F_.
+   * @param dt differential time
+   */
+  void setUncertainty(const float dt);
+
+  /**
+   * Set Process covariance of Q_.
    * @param dt differential time
    * @param noise_ax: noise for ax 
    * @param noise_ay: noise for ay
    */
-  void SetMatrixes(const float dt, const float noise_ax, const float noise_ay);
+  void setProcessCov(const float dt, const float noise_ax, const float noise_ay);
+  
+  /**
+   * Set measurement matrix of H_ for EKF.
+   */
+  void setMeasurement_Radar(void);
+
+  /**
+   * Set measurement matrix of H_ for normal KF.
+   * @param H_in Measurement matrix for laser
+   */
+  void setMeasurement_Laser(Eigen::MatrixXd &H_in);
+
+  /**
+   * Set measurement matrix of H_ for normal KF.
+   * @param R_in Measurement noise matrix
+   */
+  void setMeasurementNoise(Eigen::MatrixXd &R_in);
   
   /**
    * Prediction Predicts the state and the state covariance
